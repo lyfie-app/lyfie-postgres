@@ -1,4 +1,4 @@
-FROM bitnami/postgresql-repmgr:16.3.0
+FROM bitnami/postgresql-repmgr:16
 
 # 1. Switch to root for installation
 USER root
