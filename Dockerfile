@@ -1,4 +1,4 @@
-FROM bitnami/postgresql-repmgr:16.3.0
+FROM bitnamilegacy/postgresql-repmgr:16.3.0
 
 # Switch to root to use apt
 USER root
