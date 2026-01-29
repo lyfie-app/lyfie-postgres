@@ -2,11 +2,6 @@ name: Build and Publish Lyfie Postgres
 
 on:
   workflow_dispatch:
-    inputs:
-      tag_name:
-        description: 'Optional tag for the image (defaults to latest)'
-        required: false
-        default: 'latest'
   push:
     tags: [ 'v*.*.*' ]
 
