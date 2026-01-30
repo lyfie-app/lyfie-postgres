@@ -1,16 +1,23 @@
-FROM postgres:16
+FROM pgvector/pgvector:pg16
 
-# Install only the necessary tools to download and extract the extension
-RUN apt-get update && apt-get install -y \
-    wget \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+# This ARG is special: it's automatically filled by Docker buildx
+ARG TARGETARCH
+ARG PGVECTORS_TAG=0.2.1
 
-# Download and install pgvecto.rs extension
-# Using dynamic paths with pg_config to ensure compatibility
-RUN wget https://github.com/tensorchord/pgvecto.rs/releases/download/v0.2.1/vectors-pg16_x86_64-unknown-linux-gnu_0.2.1.zip -O vectors.zip \
-    && unzip vectors.zip -d vectors \
-    && cp vectors/vectors.so $(pg_config --pkglibdir) \
-    && cp vectors/vectors--* $(pg_config --sharedir)/extension/ \
-    && cp vectors/vectors.control $(pg_config --sharedir)/extension/ \
-    && rm -rf vectors vectors.zip
+RUN apt-get update && apt-get install -y wget && \
+    # Map Docker arch names to GitHub release names
+    if [ "$TARGETARCH" = "amd64" ]; then ARCH="x86_64"; \
+    elif [ "$TARGETARCH" = "arm64" ]; then ARCH="aarch64"; \
+    else ARCH=$TARGETARCH; fi && \
+    # Construct the download URL using the mapped ARCH
+    wget -nv -O /tmp/pgvectors.deb "https://github.com/tensorchord/pgvecto.rs/releases/download/v${PGVECTORS_TAG}/vectors-pg16_${ARCH}-unknown-linux-gnu_${PGVECTORS_TAG}.deb" && \
+    apt-get install -y /tmp/pgvectors.deb && \
+    # Cleanup
+    rm -f /tmp/pgvectors.deb && \
+    apt-get remove -y wget && \
+    apt-get autoremove -y && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN echo "shared_preload_libraries = 'vectors.so'" >> /usr/share/postgresql/postgresql.conf.sample
+
+CMD ["postgres"]
